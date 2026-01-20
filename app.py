@@ -5,88 +5,75 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 
+# .env を読む（ローカル用）
 load_dotenv()
 
-# -----------------------------
-# A/B 専門家プロンプト定義
-# -----------------------------
-EXPERT_SYSTEM_PROMPTS = {
-    "A": (
-        "You are Expert A. "
-        "You answer as a friendly travel guide specializing in Japan and Okinawa. "
-        "Give practical and warm recommendations."
-    ),
-    "B": (
-        "You are Expert B. "
-        "You answer as a professional IT support engineer. "
-        "Explain step-by-step in simple Japanese with clear solutions."
-    ),
-}
+st.set_page_config(page_title="LLMアプリ（練習）", page_icon="🧠")
+
+st.title("LLM切り替えアプリ")
+
+st.write("""
+これは練習用のアプリです。  
+A/Bの切り替えによって、LLMの性格が変わります。
+
+**使い方**
+1. AかBを選ぶ  
+2. 質問を書く  
+3. 送信する
+""")
 
 
-# -----------------------------
-# 入力テキスト + ラジオ選択値 → LLM回答
-# -----------------------------
-def ask_llm(input_text: str, expert_choice: str) -> str:
+# A/Bの説明
+st.write("**A**：厳密アシスタント")
+st.write("**B**：適当アシスタント")
 
-    system_prompt = EXPERT_SYSTEM_PROMPTS[expert_choice]
+# ラジオボタン
+ab = st.radio("AかBを選んでください", ["A", "B"], horizontal=True)
 
+# 質問入力
+text = st.text_area("質問を書いてください", "日本の首都を教えてください。")
+
+# 送信ボタン
+btn = st.button("送信")
+
+# ---- 関数（要件：入力テキスト＋ラジオ選択値 → 回答を返す）----
+def ask_llm(input_text, expert_choice):
+    # A/Bでシステムメッセージを変える（初心者っぽく if で分岐）
+    if expert_choice == "A":
+        system_text = "You are a strict assistant.Your tone is very strict and direct. Explain step-by-step in simple Japanese."
+    else:
+        system_text = "You are a careless and free-spirited assistant. Your tone is very casual and humorous. Feel free to make jokes in your answers in Japanese."
+
+    # LLMを作る
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
-    messages = [
-        SystemMessage(content=system_prompt),
+    # メッセージを作る
+    msgs = [
+        SystemMessage(content=system_text),
         HumanMessage(content=input_text),
     ]
 
-    result = llm(messages)
-    return result.content
+    # 実行して返す
+    res = llm(msgs)
+    return res.content
 
 
-# -----------------------------
-# Streamlit UI
-# -----------------------------
-st.set_page_config(page_title="A/B専門家LLMデモ", page_icon="🧠")
-
-st.title("🧠 A/B 専門家切替 LLM デモ")
-
-st.write(
-"""
-このアプリでは、**LLMの振る舞いを A / B の2種類で切り替え**できます。
-
-### 専門家設定
-- **A** : 日本・沖縄に詳しい旅行ガイド  
-- **B** : ITサポートエンジニア  
-
-### 使い方
-1. A または B を選択  
-2. 質問文を入力  
-3. 送信ボタンを押す  
-"""
-)
-
-expert_choice = st.radio(
-    "専門家タイプを選択してください",
-    options=["A", "B"],
-    horizontal=True
-)
-
-input_text = st.text_area(
-    "入力テキスト",
-    value="日本の首都を教えてください。",
-    height=120
-)
-
-send = st.button("送信", type="primary")
-
-if send:
-    if not input_text.strip():
-        st.warning("入力テキストを入力してください。")
+# ボタンが押されたら実行
+if btn:
+    if text.strip() == "":
+        st.warning("質問が空です。")
     else:
-        with st.spinner("LLMが回答中..."):
-            answer = ask_llm(input_text, expert_choice)
+        try:
+            with st.spinner("AIに聞いています..."):
+                ans = ask_llm(text, ab)
 
-        st.subheader("回答")
-        st.write(answer)
+            st.write("----")
+            st.subheader("回答")
+            st.write(ans)
 
-st.divider()
-st.caption("※ .env に OPENAI_API_KEY を設定してから streamlit run app.py で起動してください")
+        except Exception as e:
+            # エラー表示
+            st.error("エラーが出ました。")
+            st.write(e)
+
+st.write("----")
