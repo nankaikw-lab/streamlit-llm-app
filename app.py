@@ -1,12 +1,11 @@
+import os
+import streamlit as st
 from dotenv import load_dotenv
 
-load_dotenv()
-
 from langchain_openai import ChatOpenAI
-
 from langchain.schema import SystemMessage, HumanMessage
 
-import streamlit as st
+load_dotenv()
 
 # -----------------------------
 # A/B 専門家プロンプト定義
@@ -32,7 +31,7 @@ def ask_llm(input_text: str, expert_choice: str) -> str:
 
     system_prompt = EXPERT_SYSTEM_PROMPTS[expert_choice]
 
-    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
     messages = [
         SystemMessage(content=system_prompt),
