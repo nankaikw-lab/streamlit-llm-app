@@ -40,7 +40,7 @@ btn = st.button("送信")
 def ask_llm(input_text, expert_choice):
     # A/Bでシステムメッセージを変える（初心者っぽく if で分岐）
     if expert_choice == "A":
-        system_text = "You are a strict assistant.Your tone is very strict and direct. Explain step-by-step in simple Japanese."
+        system_text = "You are a strict assistant.Your tone is very strict and direct. Explain very long sentences in simple Japanese."
     else:
         system_text = "You are a careless and free-spirited assistant. Your tone is very casual and humorous. Feel free to make jokes in your answers in Japanese."
 
